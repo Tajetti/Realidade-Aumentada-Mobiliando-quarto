@@ -57,7 +57,6 @@ content="width=device-width, initial-scale=1.0">
   <button onclick="selectedModel='models/sofa.glb'">Sofá</button>
   <button onclick="selectedModel='models/armario.glb'">Armário</button>
 
-  <!-- 🔥 BOTÕES DE TAMANHO -->
   <button onclick="increaseSize()">+</button>
   <button onclick="decreaseSize()">−</button>
 </div>
@@ -70,7 +69,6 @@ let hitTestSource = null;
 let hitTestSourceRequested = false;
 let selectedModel = null;
 
-// 🔥 CONTROLE DE TAMANHO
 let lastModelPlaced = null;
 let scaleStep = 0.05;
 let minScale = 0.05;
@@ -95,10 +93,8 @@ async function activateXR() {
   document.getElementById("startButton").style.display = "none";
   document.getElementById("ar-menu").style.display = "flex";
 
-  // THREE scene
   scene = new THREE.Scene();
 
-  // LUZES
   const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1.4);
   scene.add(light);
 
@@ -116,7 +112,6 @@ async function activateXR() {
   renderer.xr.setReferenceSpaceType("local-floor");
   document.body.appendChild(renderer.domElement);
 
-  // RETÍCULO
   reticle = new THREE.Mesh(
     new THREE.RingGeometry(0.08, 0.09, 32).rotateX(-Math.PI / 2),
     new THREE.MeshBasicMaterial({ color: 0x00aaff })
@@ -144,7 +139,7 @@ async function activateXR() {
 
         scene.add(model);
 
-        lastModelPlaced = model; // 🔥 SALVA O ÚLTIMO OBJETO
+        lastModelPlaced = model;
       });
     }
   });
