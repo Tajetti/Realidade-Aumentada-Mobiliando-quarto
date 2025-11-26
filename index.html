@@ -56,6 +56,10 @@ content="width=device-width, initial-scale=1.0">
   <button onclick="selectedModel='models/cama.glb'">Cama</button>
   <button onclick="selectedModel='models/sofa.glb'">Sofá</button>
   <button onclick="selectedModel='models/armario.glb'">Armário</button>
+
+  <!-- 🔥 BOTÕES DE TAMANHO -->
+  <button onclick="increaseSize()">+</button>
+  <button onclick="decreaseSize()">−</button>
 </div>
 
 <script>
@@ -66,6 +70,26 @@ let hitTestSource = null;
 let hitTestSourceRequested = false;
 let selectedModel = null;
 
+// 🔥 CONTROLE DE TAMANHO
+let lastModelPlaced = null;
+let scaleStep = 0.05;
+let minScale = 0.05;
+let maxScale = 3.0;
+
+function increaseSize() {
+  if (!lastModelPlaced) return;
+  let s = lastModelPlaced.scale.x + scaleStep;
+  s = Math.min(s, maxScale);
+  lastModelPlaced.scale.set(s, s, s);
+}
+
+function decreaseSize() {
+  if (!lastModelPlaced) return;
+  let s = lastModelPlaced.scale.x - scaleStep;
+  s = Math.max(s, minScale);
+  lastModelPlaced.scale.set(s, s, s);
+}
+
 async function activateXR() {
 
   document.getElementById("startButton").style.display = "none";
@@ -74,7 +98,7 @@ async function activateXR() {
   // THREE scene
   scene = new THREE.Scene();
 
-  // ⭐⭐⭐ ADICIONANDO LUZES PARA MODELOS NÃO FICAREM PRETOS ⭐⭐⭐
+  // LUZES
   const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1.4);
   scene.add(light);
 
@@ -84,7 +108,7 @@ async function activateXR() {
 
   camera = new THREE.PerspectiveCamera();
   camera.matrixAutoUpdate = false;
-  scene.add(camera);  // ← obrigatório
+  scene.add(camera);
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -92,7 +116,7 @@ async function activateXR() {
   renderer.xr.setReferenceSpaceType("local-floor");
   document.body.appendChild(renderer.domElement);
 
-  // RETICLE (bolinha azul)
+  // RETÍCULO
   reticle = new THREE.Mesh(
     new THREE.RingGeometry(0.08, 0.09, 32).rotateX(-Math.PI / 2),
     new THREE.MeshBasicMaterial({ color: 0x00aaff })
@@ -100,7 +124,6 @@ async function activateXR() {
   reticle.visible = false;
   scene.add(reticle);
 
-  // XR SESSION
   const session = await navigator.xr.requestSession("immersive-ar", {
     requiredFeatures: ["hit-test", "local-floor", "dom-overlay"],
     domOverlay: { root: document.body }
@@ -110,15 +133,18 @@ async function activateXR() {
   const referenceSpace = await session.requestReferenceSpace("local-floor");
   const viewerSpace = await session.requestReferenceSpace("viewer");
 
-  // Colocar objeto ao tocar na tela
   session.addEventListener("select", () => {
     if (selectedModel && reticle.visible) {
       loader.load(selectedModel, (gltf) => {
         const model = gltf.scene;
+
         model.position.copy(reticle.position);
         model.quaternion.copy(reticle.quaternion);
         model.scale.set(0.4, 0.4, 0.4);
+
         scene.add(model);
+
+        lastModelPlaced = model; // 🔥 SALVA O ÚLTIMO OBJETO
       });
     }
   });
@@ -143,17 +169,9 @@ async function activateXR() {
         const pose = hit.getPose(referenceSpace);
 
         reticle.visible = true;
-        reticle.position.set(
-          pose.transform.position.x,
-          pose.transform.position.y,
-          pose.transform.position.z
-        );
-        reticle.quaternion.set(
-          pose.transform.orientation.x,
-          pose.transform.orientation.y,
-          pose.transform.orientation.z,
-          pose.transform.orientation.w
-        );
+        reticle.position.copy(pose.transform.position);
+        reticle.quaternion.copy(pose.transform.orientation);
+
       } else {
         reticle.visible = false;
       }
